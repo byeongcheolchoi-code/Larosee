@@ -10,6 +10,9 @@ import ApprovalQueue from './pages/ApprovalQueue.jsx'
 import MyStatus from './pages/MyStatus.jsx'
 import AdminDashboard from './pages/AdminDashboard.jsx'
 import ScriptGenerator from './pages/ScriptGenerator.jsx'
+import SalesEntry from './pages/SalesEntry.jsx'
+import EcountUpload from './pages/EcountUpload.jsx'
+import StoreAliasManager from './pages/StoreAliasManager.jsx'
 import './styles.css'
 
 function Shell({ children }) {
@@ -20,9 +23,12 @@ function Shell({ children }) {
   if (profile?.role === '본사관리자' || profile?.role === '최고관리자') {
     links.push({ to: '/admin', label: '관리자 대시보드' })
     links.push({ to: '/approvals', label: '가입 승인' })
+    links.push({ to: '/sales', label: '매출 입력' })
+    links.push({ to: '/ecount-upload', label: '이카운트 업로드' })
   }
   if (profile?.role === '파트장' || profile?.role === '일반직원') {
     links.push({ to: '/my', label: '내 학습 현황' })
+    links.push({ to: '/sales', label: '매출 입력' })
   }
   links.push({ to: '/script', label: '현장 스크립트' })
 
@@ -82,6 +88,24 @@ function App() {
           <Route path="/my" element={
             <RequireAuth allowedRoles={['파트장', '일반직원']}>
               <Shell><MyStatus /></Shell>
+            </RequireAuth>
+          } />
+
+          <Route path="/sales" element={
+            <RequireAuth allowedRoles={['파트장', '일반직원', '본사관리자', '최고관리자']}>
+              <Shell><SalesEntry /></Shell>
+            </RequireAuth>
+          } />
+
+          <Route path="/ecount-upload" element={
+            <RequireAuth allowedRoles={['본사관리자', '최고관리자']}>
+              <Shell><EcountUpload /></Shell>
+            </RequireAuth>
+          } />
+
+          <Route path="/store-aliases" element={
+            <RequireAuth allowedRoles={['본사관리자', '최고관리자']}>
+              <Shell><StoreAliasManager /></Shell>
             </RequireAuth>
           } />
 
