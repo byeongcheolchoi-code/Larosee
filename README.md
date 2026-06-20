@@ -1,7 +1,62 @@
 # 라로제 코리아 교육 플랫폼 — 배포 가이드
 
-이 폴더는 관리자 대시보드 + 현장 스크립트 생성기 2개 화면으로 구성된
-React 기반 웹앱이며, PWA(홈 화면 추가 가능) 설정이 포함되어 있습니다.
+이 폴더는 회원가입/로그인/승인, 관리자 대시보드, 현장 스크립트 생성기로
+구성된 React + Supabase 기반 웹앱이며, PWA(홈 화면 추가 가능) 설정이
+포함되어 있습니다.
+
+## 0. Supabase 연동 설정 (필수)
+
+이 앱은 Supabase를 로그인/데이터베이스로 사용합니다. 배포 전에 반드시
+환경변수를 설정해야 합니다.
+
+### 로컬에서 테스트할 때
+1. `.env.example` 파일을 복사해서 `.env` 파일을 만드세요
+2. Supabase 대시보드 → Settings → API에서 Project URL과 Publishable key를 복사해 채워넣으세요
+   ```
+   VITE_SUPABASE_URL=https://ycqhivfuajzujtpnbpnm.supabase.co
+   VITE_SUPABASE_ANON_KEY=sb_publishable_xxxxx
+   ```
+
+### Vercel에 배포할 때
+Vercel 프로젝트 설정 → Settings → Environment Variables 에서 위 두 값을
+똑같이 등록해야 합니다. (자세한 절차는 아래 "2-1. Vercel 환경변수 설정"
+참고)
+
+## 0-1. 권한 체계
+
+이 앱은 4단계 권한을 사용합니다.
+
+| 권한 | 할 수 있는 일 |
+|---|---|
+| 최고관리자 | 전체 데이터 열람 + 가입 승인 + **본사관리자/최고관리자 권한 부여** |
+| 본사관리자 | 전체 데이터 열람 + 가입 승인 (단, 일반직원·파트장 권한만 부여 가능) |
+| 파트장 | 본인 지점 데이터 열람, 코칭 기록 작성 |
+| 일반직원 | 본인 데이터 열람, 현장 스크립트 생성기 사용 |
+
+본사관리자는 여러 명(교육팀원 등) 둘 수 있지만, "본사관리자 권한을 새로 부여하는 것"은
+최고관리자(라온님)만 할 수 있습니다. 이렇게 해야 관리자 권한이 통제 없이 계속 늘어나는
+것을 막을 수 있습니다.
+
+### 첫 최고관리자 계정 만들기
+이 앱은 직원이 스스로 가입하고 관리자가 승인하는 구조라서, 맨 처음
+"최고관리자"가 한 명도 없으면 아무도 승인할 사람이 없는 상태가 됩니다.
+다음 순서로 첫 계정을 만드세요.
+
+1. 배포된 사이트에서 본인(라온님) 계정으로 회원가입 (신청 권한은 아무거나 선택)
+2. **DB에 아직 `최고관리자` 권한이 없다면**, Supabase 대시보드 → SQL Editor에서
+   `supabase/migration_super_admin.sql` 파일 내용을 먼저 실행하세요 (최초 1회만)
+3. 같은 SQL Editor에서 아래 SQL 실행 (이메일 부분만 본인 것으로 수정)
+   ```sql
+   update public.profiles
+   set role = '최고관리자', status = 'approved'
+   where email = '본인이메일@example.com';
+   ```
+4. 이후 로그인하면 관리자 대시보드와 가입 승인 메뉴가 보입니다
+5. 다른 직원들의 가입 승인은 이제부터 사이트의 "가입 승인" 메뉴에서 처리하면 됩니다
+   - 교육팀원을 "본사관리자"로 승인하고 싶다면, 라온님(최고관리자) 계정으로 로그인한
+     상태에서 승인 화면의 "부여 권한"을 본사관리자로 선택하면 됩니다
+   - 본사관리자로 로그인한 사람은 일반직원/파트장만 승인 가능하고, 본사관리자
+     권한 부여 옵션 자체가 보이지 않습니다
 
 ## 1. 로컬에서 미리 보기 (선택)
 
@@ -43,8 +98,17 @@ npm run dev
    - vercel.com 로그인 → `Add New` → `Project`
    - 방금 만든 GitHub 저장소(`larosee-edu`) 선택 → `Import`
    - Framework Preset: `Vite` 자동 감지됨 (수정 불필요)
+   - **`Deploy` 누르기 전에** "Environment Variables" 섹션을 펼쳐서 아래 두 개를 추가하세요
+     - Name: `VITE_SUPABASE_URL` / Value: Supabase Project URL
+     - Name: `VITE_SUPABASE_ANON_KEY` / Value: Supabase Publishable key
    - `Deploy` 클릭
    - 1~2분 후 `https://larosee-edu-xxxx.vercel.app` 같은 실제 URL 발급
+
+   ### 2-1. Vercel 환경변수 설정 (배포 후 추가/수정하는 경우)
+   이미 배포된 프로젝트에 환경변수를 나중에 추가하거나 수정하려면:
+   - Vercel 프로젝트 페이지 → `Settings` → `Environment Variables`
+   - 위 두 값을 입력하고 `Save`
+   - 변경 후에는 `Deployments` 탭에서 가장 최근 배포 옆 `...` 메뉴 → `Redeploy`를 눌러야 반영됩니다
 
 3. **완료**
    - 이 URL을 현장 직원들에게 공유하면 바로 접속 가능
