@@ -16,7 +16,7 @@ export default function SignUp() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    supabase.from('stores').select('id, name, department_store').order('name')
+    supabase.from('stores').select('id, name, department_store').eq('status', '운영중').order('name')
       .then(({ data, error }) => {
         if (!error) setStores(data)
       })

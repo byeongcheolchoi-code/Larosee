@@ -34,7 +34,7 @@ export default function SalesEntry() {
   // 관리자는 전체 지점 목록이 필요함 (어느 지점 직원이든 입력 가능)
   useEffect(() => {
     if (!isAdmin) return
-    supabase.from('stores').select('id, name').order('name')
+    supabase.from('stores').select('id, name').eq('status', '운영중').order('name')
       .then(({ data, error }) => { if (!error) setStores(data) })
   }, [isAdmin])
 
